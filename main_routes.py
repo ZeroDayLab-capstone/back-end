@@ -1,43 +1,45 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import List
+from sqlalchemy.orm import Session
+from database import SessionLocal
+from models import Announcement
 
-app = FastAPI()
 router = APIRouter()
 
-# ✅ 데이터 모델
 class MenuItem(BaseModel):
     name: str
     link: str
 
-class Announcement(BaseModel):
+class AnnouncementOut(BaseModel):
     title: str
     date: str
 
-# 임시 데이터
 MENU_ITEMS = [
     {"name": "Home", "link": "/"},
     {"name": "Labs", "link": "/labs"},
     {"name": "Login", "link": "/auth/login"},
 ]
 
-ANNOUNCEMENTS = [
-    {"title": "Welcome to the Platform!", "date": "2025-03-25"},
-    {"title": "New Security Labs Added", "date": "2025-03-24"},
-]
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-# API 엔드포인트
+# 소개글
 @router.get("/intro")
 def get_intro():
     return {"content": "This platform provides hands-on security labs to learn web vulnerabilities."}
 
+# 메뉴
 @router.get("/menu")
 def get_menu():
     return {"menu": MENU_ITEMS}
 
-@router.get("/announcements")
-def get_announcements():
-    return {"announcements": ANNOUNCEMENTS}
-
-# ✅ 라우터 등록
-app.include_router(router, prefix="/main")
+# 공지사항 (DB 기반)
+@router.get("/announcements", response_model=List[AnnouncementOut])
+def get_announcements(db: Session = Depends(get_db)):
+    announcements = db.query(Announcement).all()
+    return announcements

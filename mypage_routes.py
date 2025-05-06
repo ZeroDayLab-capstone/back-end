@@ -1,12 +1,11 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, EmailStr
 from typing import List, Dict
-from fastapi import APIRouter
+from sqlalchemy.orm import Session
+from database import SessionLocal
+from models import User, Lab, UserLabProgress
 
 router = APIRouter()
-@router.get("/intro")
-def get_intro():
-    return {"content": "This platform provides hands-on security labs to learn web vulnerabilities."}
 
 class LabItem(BaseModel):
     id: int
@@ -20,44 +19,45 @@ class ProfileUpdateRequest(BaseModel):
 class MessageResponse(BaseModel):
     message: str
 
-# 더미 데이터 
-ONGOING_LABS = [
-    {"id": 1, "title": "XSS 실습"},
-    {"id": 2, "title": "SQL Injection 실습"},
-]
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-COMPLETED_LABS = [
-    {"id": 3, "title": "CSRF 실습"},
-]
+# 현재 진행 중인 실습 조회
+@router.get("/ongoing-labs/{user_id}", response_model=Dict[str, List[LabItem]])
+def get_ongoing_labs(user_id: int, db: Session = Depends(get_db)):
+    progresses = db.query(UserLabProgress).filter(
+        UserLabProgress.user_id == user_id,
+        UserLabProgress.status == "in-progress"
+    ).all()
 
-DUMMY_USER = {
-    "username": "testuser",
-    "email": "test@example.com",
-    "password": "1234"
-}
+    labs = [LabItem(id=p.lab.id, title=p.lab.title) for p in progresses]
+    return {"labs": labs}
 
+# 완료된 실습 조회
+@router.get("/completed-labs/{user_id}", response_model=Dict[str, List[LabItem]])
+def get_completed_labs(user_id: int, db: Session = Depends(get_db)):
+    progresses = db.query(UserLabProgress).filter(
+        UserLabProgress.user_id == user_id,
+        UserLabProgress.status == "completed"
+    ).all()
 
-@router.get("/ongoing-labs", response_model=Dict[str, List[LabItem]])
-def get_ongoing_labs() -> dict:
-    return {"labs": ONGOING_LABS}
+    labs = [LabItem(id=p.lab.id, title=p.lab.title) for p in progresses]
+    return {"labs": labs}
 
+# 프로필 수정
+@router.put("/profile/{user_id}", response_model=MessageResponse)
+def update_profile(user_id: int, data: ProfileUpdateRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
-@router.get("/completed-labs", response_model=Dict[str, List[LabItem]])
-def get_completed_labs() -> dict:
-    return {"labs": COMPLETED_LABS}
+    user.username = data.username
+    user.email = data.email
+    user.password = data.password
 
-
-@router.put("/profile", response_model=MessageResponse)
-def update_profile(data: ProfileUpdateRequest) -> dict:
-    print(" 기존 유저 정보:", DUMMY_USER)
-    print(" 받은 요청 데이터:", data.dict())
-
-
-    if not data.username or not data.password:
-        raise HTTPException(status_code=400, detail="Username and password are required.")
-
-    DUMMY_USER["username"] = data.username
-    DUMMY_USER["email"] = data.email
-    DUMMY_USER["password"] = data.password
-
+    db.commit()
     return {"message": "Profile updated successfully"}

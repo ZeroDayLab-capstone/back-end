@@ -1,27 +1,31 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from typing import Dict
-from fastapi import APIRouter
+from database import SessionLocal
+from models import Explanation
 
 
 router = APIRouter()
 
-# 📦 요청/응답 모델 정의
 class ExplanationRequest(BaseModel):
-    user_id: int
-    question_id: int
-    answer: str
+    topic: str
 
 class ExplanationResponse(BaseModel):
-    explanation: str
+    content: str
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-# ✅ 해설 제공 API
-@router.post("/explantion", response_model=ExplanationResponse)
-def provide_Explanation(request: ExplanationRequest) -> ExplanationResponse:
-    """
-    문제에 대한 해설 제공 (임시 로직)
-    """
-    explantion_msg =f"해설제공"
-    return {"ㅌxplanation": explantion_msg}
+from models import Explanation  # Guide = explanation 테이블로 연결됨
+
+@router.post("/explanation", response_model=ExplanationResponse)
+def provide_explanation(request: ExplanationRequest, db: Session = Depends(get_db)):
+    explanation = db.query(Explanation).filter(Explanation.topic == request.topic).first()
+    if not explanation:
+        raise HTTPException(status_code=404, detail="Explanation not found")
+    return {"content": explanation.content}
 

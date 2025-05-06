@@ -1,14 +1,18 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from database import SessionLocal
+from models import Lab, UserLabProgress, Feedback
+
 
 router = APIRouter()
 
-# 요청 모델
+# 요청/응답 모델
 class SubmitAnswerRequest(BaseModel):
+    user_id: int
     lab_id: int
     answer: str
 
-# 응답 모델
 class URLResponse(BaseModel):
     url: str
 
@@ -21,48 +25,70 @@ class HintResponse(BaseModel):
 class FeedbackResponse(BaseModel):
     feedback: str
 
-# 더미 데이터
-VALID_LABS = {
-    1: {"answer": "admin", "hint": "Try SQL injection", "feedback": "This was a classic SQLi vulnerability."},
-    2: {"answer": "cookie", "hint": "Check the cookies", "feedback": "This lab was about session handling."}
-}
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 # 실습 환경 제공
 @router.get("/environment", response_model=URLResponse)
 def get_lab_environment():
-    # 실제 환경이라면 Docker 컨테이너 상태 확인
-    url = "http://lab.localhost:8001"  # 예시
-    if not url:
-        raise HTTPException(status_code=503, detail="Lab environment unavailable.")
+    url = "http://lab.localhost:8001"  # 예시 URL
     return {"url": url}
 
-# 문제 제출
+# 문제 제출 및 진행도 기록
 @router.post("/submit", response_model=ResultResponse)
-def submit_answer(data: SubmitAnswerRequest):
-    lab = VALID_LABS.get(data.lab_id)
+def submit_answer(data: SubmitAnswerRequest, db: Session = Depends(get_db)):
+    lab = db.query(Lab).filter(Lab.id == data.lab_id).first()
     if not lab:
         raise HTTPException(status_code=404, detail="Lab not found.")
 
-    if not data.answer:
-        raise HTTPException(status_code=400, detail="Answer is required.")
+    progress = db.query(UserLabProgress).filter(
+        UserLabProgress.user_id == data.user_id,
+        UserLabProgress.lab_id == data.lab_id
+    ).first()
 
-    if data.answer.strip().lower() == lab["answer"]:
-        return {"result": "Correct!"}
+    is_correct = data.answer.strip().lower() == lab.answer.strip().lower()
+
+    if not progress:
+        progress = UserLabProgress(
+            user_id=data.user_id,
+            lab_id=data.lab_id,
+            status="completed" if is_correct else "in-progress",
+            is_correct=is_correct
+        )
+        db.add(progress)
     else:
-        return {"result": "Incorrect. Try again."}
+        progress.status = "completed" if is_correct else "in-progress"
+        progress.is_correct = is_correct
 
-# 결과 확인
-@router.get("/results", response_model=ResultResponse)
-def get_results():
-    # 실제라면 사용자별로 DB에서 가져옴
-    return {"result": "Lab 1: Correct, Lab 2: In Progress"}
+    db.commit()
+    return {"result": "Correct!" if is_correct else "Incorrect. Try again."}
 
 # 힌트 제공
-@router.get("/hint", response_model=HintResponse)
-def get_hint():
-    return {"hint": "생각보다 쿠키가 힌트일지도?"}
+@router.get("/hint/{lab_id}", response_model=HintResponse)
+def get_hint(lab_id: int, db: Session = Depends(get_db)):
+    lab = db.query(Lab).filter(Lab.id == lab_id).first()
+    if not lab or not lab.hint:
+        raise HTTPException(status_code=404, detail="Hint not available.")
+    return {"hint": lab.hint}
 
 # 피드백 제공
-@router.get("/feedback", response_model=FeedbackResponse)
-def get_feedback():
-    return {"feedback": "이 실습은 인증 우회에 대한 이해를 평가합니다."}
+@router.get("/feedback/{lab_id}", response_model=FeedbackResponse)
+def get_feedback(lab_id: int, db: Session = Depends(get_db)):
+    feedback = db.query(Feedback).filter(Feedback.lab_id == lab_id).first()
+    if not feedback:
+        raise HTTPException(status_code=404, detail="Feedback not found.")
+    return {"feedback": feedback.feedback}
+
+# 결과 요약
+@router.get("/results/{user_id}", response_model=list[ResultResponse])
+def get_results(user_id: int, db: Session = Depends(get_db)):
+    progresses = db.query(UserLabProgress).filter(UserLabProgress.user_id == user_id).all()
+    results = []
+    for p in progresses:
+        result_text = f"Lab {p.lab_id}: {'Correct' if p.is_correct else 'In Progress'}"
+        results.append({"result": result_text})
+    return results
