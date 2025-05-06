@@ -61,3 +61,12 @@ class Feedback(Base):
     id = Column(Integer, primary_key=True, index=True)
     lab_id = Column(Integer, ForeignKey("labs.id"), nullable=False)
     feedback = Column(Text, nullable=False)
+
+    # 로그 테이블 
+class Log(Base):
+    __tablename__ = "logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(Text, nullable=False)
+    action = Column(Text, nullable=False)
+    user = Column(Text, nullable=False)
