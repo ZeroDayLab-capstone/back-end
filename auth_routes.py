@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import User
@@ -6,6 +6,7 @@ from pydantic import BaseModel, EmailStr
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
+from fastapi.security import OAuth2PasswordBearer
 import os
 from dotenv import load_dotenv
 
@@ -80,3 +81,27 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 
     access_token = create_access_token(data={"sub": user.email}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     return {"token": access_token}
+
+# JWT 토큰 인증 처리
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+
+credentials_exception = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Could not validate credentials",
+    headers={"WWW-Authenticate": "Bearer"},
+)
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+        return email
+    except JWTError:
+        raise credentials_exception
+
+# 보호된 라우트 예시
+@router.get("/flag", response_model=MessageResponse)
+def get_flag(current_user: str = Depends(get_current_user)):
+    return {"message": f"FLAG{{you_are_{current_user}}}"}
