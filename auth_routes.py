@@ -39,9 +39,12 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "User registered successfully"}
 
+# 로그인
 @router.post("/login", response_model=TokenResponse)
 def login(data: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == data.email, User.password == data.password).first()
-    if not user:
+    user = db.query(User).filter(User.email == data.email).first()
+    if not user or not verify_password(data.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid email or password.")
-    return {"token": "dummy-jwt-token"}
+    
+    access_token = create_access_token(data={"sub": user.email}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    return {"token": access_token}
