@@ -13,9 +13,8 @@ router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT 설정
-SECRET_KEY = "your-secret-key"  # 안전하게 .env로 분리 권장
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+
 
 # 요청/응답 모델
 class RegisterRequest(BaseModel):
