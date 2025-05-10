@@ -23,6 +23,7 @@ class Lab(Base):
     difficulty = Column(Text, nullable=False)
     answer = Column(Text, nullable=False)
     hint = Column(Text)
+    flag = Column(Text)
 
     progress = relationship("UserLabProgress", back_populates="lab")
 

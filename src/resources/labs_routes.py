@@ -22,6 +22,7 @@ class URLResponse(BaseModel):
 
 class ResultResponse(BaseModel):
     result: str
+    explanation_topic: str | None = None
 
 class HintResponse(BaseModel):
     hint: str
@@ -86,7 +87,17 @@ def submit_answer(data: SubmitAnswerRequest, db: Session = Depends(get_db)):
         progress.is_correct = is_correct
 
     db.commit()
-    return {"result": "Correct!" if is_correct else "Incorrect. Try again."}
+
+    if is_correct:
+        return {
+            "result": "Correct!",
+            "explanation_topic": lab.title  # 해설 topic은 lab.title과 연결
+        }
+    else:
+        return {
+            "result": "Incorrect. Try again.",
+            "explanation_topic": None
+        }
 
 # 힌트 제공
 @router.get(
