@@ -11,7 +11,7 @@ app = FastAPI()
 app.include_router(main_routes.router, prefix="/main")     # 메인 페이지 API
 app.include_router(mypage_routes.router, prefix="/mypage") # 마이페이지 API
 app.include_router(auth_routes.router, prefix="/auth")     # 로그인 API
-app.include_router(explanation_routes.router, prefix="/explanation") #해설 페이지 API
+app.include_router(explanation_routes.router, prefix="/subject") #해설 페이지 API
 app.include_router(labs_routes.router, prefix="/labs") #실습페이지 API
 app.include_router(admin_routes.router, prefix="/admin")   #관리자페이지 API
 
