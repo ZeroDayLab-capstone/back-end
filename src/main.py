@@ -19,7 +19,7 @@ app.include_router(admin_routes.router, prefix="/admin")   #관리자페이지 A
 # 🔥 CORS 설정 추가
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:9000"],  # Vue 개발 서버 주소
+    allow_origins=["*"],  # Vue 개발 서버 주소
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

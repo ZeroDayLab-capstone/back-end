@@ -11,7 +11,7 @@ import os
 from dotenv import load_dotenv
 
 router = APIRouter(
-    prefix="/auth",
+    prefix="",
     tags=["authentication"],
     responses={401: {"description": "인증 실패"}, 500: {"description": "서버 오류"}}
 )
