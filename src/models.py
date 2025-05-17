@@ -10,6 +10,9 @@ class User(Base):
     username = Column(Text, nullable=False)
     email = Column(Text, unique=True, nullable=False)
     password = Column(Text, nullable=False)
+    gender = Column(Text, nullable=True)
+    nationality = Column(Text, nullable=True)
+    job = Column(Text, nullable=True)
 
     progress = relationship("UserLabProgress", back_populates="user")
 

@@ -32,6 +32,9 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     username: str
+    gender: str | None = None
+    nationality: str | None = None
+    job: str | None = None
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -82,7 +85,8 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=409, detail="Email already registered.")
 
     hashed_pw = hash_password(data.password)
-    new_user = User(email=data.email, password=hashed_pw, username=data.username)
+    new_user = User(email=data.email, password=hashed_pw, username=data.username,
+    gender=data.gender, nationality=data.nationality, job=data.job)
     db.add(new_user)
     db.commit()
     return {"message": "User registered successfully"}

@@ -4,6 +4,7 @@ from typing import List, Dict
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import User, Lab, UserLabProgress
+from passlib.context import CryptContext
 
 router = APIRouter(
     prefix="/mypage",
@@ -19,6 +20,9 @@ class ProfileUpdateRequest(BaseModel):
     username: str
     email: EmailStr
     password: str
+    gender: str | None = None
+    nationality: str | None = None
+    job: str | None = None
 
 class MessageResponse(BaseModel):
     message: str
@@ -29,6 +33,11 @@ def get_db():
         yield db
     finally:
         db.close()
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)        
 
 # 현재 진행 중인 실습 조회
 @router.get(
@@ -92,7 +101,10 @@ def update_profile(user_id: int, data: ProfileUpdateRequest, db: Session = Depen
 
     user.username = data.username
     user.email = data.email
-    user.password = data.password  # 참고: 실제로는 비밀번호 해싱 처리 필요
+    user.password = hash_password(data.password)  # 참고: 실제로는 비밀번호 해싱 처리 필요
+    user.gender = data.gender
+    user.nationality = data.nationality
+    user.job = data.job
 
     db.commit()
     return {"message": "Profile updated successfully"}
