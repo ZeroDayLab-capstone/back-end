@@ -24,11 +24,20 @@ class UserOut(BaseModel):
     id: int
     username: str
     email: str
+    gender: str | None = None
+    nationality: str | None = None
+    job: str | None = None
+
+    class Config:
+        from_attributes = True
 
 class LabCreate(BaseModel):
     title: str
     description: str
     difficulty: str
+    answer: str
+    hint: str
+    flag: str
 
 class LabResponse(BaseModel):
     message: str
@@ -48,6 +57,14 @@ class LogItem(BaseModel):
     action: str
     user: str
 
+class LabUpdate(BaseModel):
+    title: str
+    description: str
+    difficulty: str
+    answer: str
+    hint: str
+    flag: str
+
 # ======= Admin API =======
 
 @router.get(
@@ -60,7 +77,16 @@ class LogItem(BaseModel):
 )
 def get_all_users(db: Session = Depends(get_db)):
     users = db.query(User).all()
-    return {"users": users}
+    return {"users": [
+    UserOut(
+      id=u.id,
+      username=u.username,
+      email=u.email,
+      gender=u.gender,
+      nationality=u.nationality,
+      job=u.job
+    ) for u in users
+  ]}
 
 @router.post(
     "/labs", 
@@ -126,3 +152,34 @@ def get_logs():
         {"timestamp": "2025-05-06T12:05:00Z", "action": "CREATE_LAB", "user": "admin"},
     ]
     return {"logs": logs}
+
+@router.put(
+    "/labs/{lab_id}",
+    response_model=LabResponse,
+    status_code=status.HTTP_200_OK,
+    summary="실습 수정",
+    description="기존 실습 문제의 내용을 수정합니다.",
+    response_description="수정 완료 메시지",
+    responses={
+        404: {"description": "해당 실습을 찾을 수 없습니다"},
+        500: {"description": "DB 업데이트 실패"}
+    }
+)
+def update_lab(lab_id: int, data: LabUpdate, db: Session = Depends(get_db)):
+    lab = db.query(Lab).filter(Lab.id == lab_id).first()
+    if not lab:
+        raise HTTPException(status_code=404, detail="Lab not found")
+
+    try:
+        lab.title = data.title
+        lab.description = data.description
+        lab.difficulty = data.difficulty
+        lab.answer = data.answer
+        lab.hint = data.hint
+        lab.flag = data.flag
+
+        db.commit()
+        return {"message": "Lab updated successfully"}
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="DB_UPDATE_FAILED")
