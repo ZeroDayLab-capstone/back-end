@@ -59,13 +59,6 @@ class Announcement(Base):
     date = Column(Text, nullable=False)
 
 
-class Feedback(Base):
-    __tablename__ = "feedbacks"
-
-    id = Column(Integer, primary_key=True, index=True)
-    lab_id = Column(Integer, ForeignKey("labs.id"), nullable=False)
-    feedback = Column(Text, nullable=False)
-
 # 로그 테이블 
 class Log(Base):
     __tablename__ = "logs"
