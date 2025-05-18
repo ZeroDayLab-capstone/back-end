@@ -86,20 +86,22 @@ BE/
 - POST /labs/submit: 실습 문제 답안 제출
 - GET /labs/hint/{lab_id}: 실습 힌트 조회
 - GET /labs/feedback/{lab_id}: 실습 피드백 조회
+- GET /labs/results/{user_id}: 사용자 실습 결과 요약
 
 마이페이지 API
 - GET /mypage/ongoing-labs/{user_id}: 진행 중인 실습 조회
 - GET /mypage/completed-labs/{user_id}: 완료된 실습 조회
 - PUT /mypage/profile/{user_id}: 사용자 프로필 수정
 
-설명 자료 API
-- POST /explanation/explanation: 보안 주제 설명 자료 조회
+해설 API
+- POST /resources/explanation: 보안 주제 설명 자료 조회
 
 관리자 API
 - GET /admin/users: 전체 사용자 목록
 - POST /admin/labs: 새 실습 생성
 - GET /admin/user-results: 사용자 실습 결과 조회
 - GET /admin/logs: 시스템 로그 조회
+- GET /admin/server-status: 서버 상태 확인
 
 ## 📝 주의사항
 - 프로덕션 환경에서는 SECRET_KEY를 안전하게 관리하세요.
