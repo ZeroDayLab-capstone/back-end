@@ -43,6 +43,14 @@ class ProfileUpdateRequest(BaseModel):
 class MessageResponse(BaseModel):
     message: str
 
+# 프로필 조회 응답 모델
+class ProfileResponse(BaseModel):
+    username: str
+    email: EmailStr
+    gender: str | None = None
+    nationality: str | None = None
+    job: str | None = None
+
 # 진행 중 실습 목록 조회
 @router.get(
     "/ongoing-labs/{user_id}",
@@ -99,3 +107,24 @@ def update_profile(user_id: int, data: ProfileUpdateRequest, db: Session = Depen
 
     db.commit()
     return {"message": "Profile updated successfully"}
+
+# 프로필 조회 엔드포인트
+@router.get(
+    "/profile/{user_id}",
+    response_model=ProfileResponse,
+    summary="사용자 프로필 조회",
+    description="특정 사용자의 프로필 정보를 반환합니다.",
+    status_code=status.HTTP_200_OK,
+    responses={404: {"description": "사용자를 찾을 수 없습니다"}}
+)
+def get_profile(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return ProfileResponse(
+        username=user.username,
+        email=user.email,
+        gender=user.gender,
+        nationality=user.nationality,
+        job=user.job
+    )
