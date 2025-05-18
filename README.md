@@ -84,11 +84,9 @@ BE/
 실습 API
 - GET /labs/environment: 실습 환경 접속 URL
 - POST /labs/submit: 실습 문제 답안 제출
-- GET /labs/hint/{lab_id}: 실습 힌트 조회
-- GET /labs/feedback/{lab_id}: 실습 피드백 조회
-- GET /labs/results/{user_id}: 사용자 실습 결과 요약
 
 마이페이지 API
+- GET /mypage/profile/{user_id}: 사용자 프로필 조회
 - GET /mypage/ongoing-labs/{user_id}: 진행 중인 실습 조회
 - GET /mypage/completed-labs/{user_id}: 완료된 실습 조회
 - PUT /mypage/profile/{user_id}: 사용자 프로필 수정
@@ -99,6 +97,7 @@ BE/
 관리자 API
 - GET /admin/users: 전체 사용자 목록
 - POST /admin/labs: 새 실습 생성
+- PUT /admin/labs/{lab_id}: 실습 수정
 - GET /admin/user-results: 사용자 실습 결과 조회
 - GET /admin/logs: 시스템 로그 조회
 - GET /admin/server-status: 서버 상태 확인
