@@ -121,15 +121,31 @@ credentials_exception = HTTPException(
     headers={"WWW-Authenticate": "Bearer"},
 )
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
-        return email
     except JWTError:
         raise credentials_exception
+
+    user = db.query(User).filter(User.email == email).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+@router.get("/me")
+def read_current_user(current_user: User = Depends(get_current_user)):
+    return {
+        "username": current_user.username,
+        "email": current_user.email,
+        "gender": current_user.gender,
+        "nationality": current_user.nationality,
+        "job": current_user.job
+    }
 
 # 보호된 라우트 예시
 # @router.get(
