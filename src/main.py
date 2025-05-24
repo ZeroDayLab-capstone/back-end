@@ -4,7 +4,7 @@ from resources import auth_routes, explanation_routes
 from resources import explanation_routes, admin_routes
 from database import Base, engine
 from fastapi.middleware.cors import CORSMiddleware
-from container_manager import router as container_router
+from container_operations import router as container_router
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
