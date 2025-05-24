@@ -1,5 +1,5 @@
 import docker, socket, random, uuid
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response, status
 from pydantic import BaseModel
 
 # APIRouter 인스턴스 생성
@@ -49,6 +49,7 @@ class StartResponse(BaseModel):
     frontend_host: str
     frontend_port: int
     network: str
+    frontend_url: str
 
 class StopResponse(BaseModel):
     instance_id: str
@@ -75,7 +76,6 @@ def start_problem(req: StartRequest):
         raise HTTPException(status_code=400, detail="유효하지 않은 문제 ID입니다.")
     # 이미 실행된 인스턴스가 있으면 중단 후 재실행
     if pid in _active_by_problem:
-        # 기존 인스턴스 정리
         _cleanup_instance(_active_by_problem[pid])
 
     image_name = PROBLEM_IMAGE_NAMES[pid]
@@ -86,9 +86,11 @@ def start_problem(req: StartRequest):
     while frontend_port == backend_port:
         frontend_port = _find_available_port(port_range)
 
+    # 네트워크 생성
     network_name = f"problem_{pid}_{uuid.uuid4().hex[:8]}"
     network = client.networks.create(network_name, driver="bridge")
 
+    # 컨테이너 실행
     backend_container = client.containers.run(
         f"zeroday01478/{image_name}:backend",
         detach=True,
@@ -112,6 +114,9 @@ def start_problem(req: StartRequest):
     }
     _active_by_problem[pid] = instance_id
 
+    # frontend URL 조합
+    frontend_url = f"http://{frontend_container.attrs['NetworkSettings']['IPAddress']}:{frontend_port}" if False else f"http://{"localhost"}:{frontend_port}"
+
     return StartResponse(
         instance_id=instance_id,
         backend_host="localhost",
@@ -119,6 +124,7 @@ def start_problem(req: StartRequest):
         frontend_host="localhost",
         frontend_port=frontend_port,
         network=network_name,
+        frontend_url=frontend_url,
     )
 
 @router.post("/stop/{instance_id}", response_model=StopResponse)
@@ -152,7 +158,6 @@ def _cleanup_instance(instance_id: str):
     except:
         pass
     _instances.pop(instance_id, None)
-    # 문제별 맵에서도 제거
     for pid, iid in list(_active_by_problem.items()):
         if iid == instance_id:
             _active_by_problem.pop(pid)
@@ -161,6 +166,5 @@ def _cleanup_instance(instance_id: str):
 def _stop_and_cleanup(instance_id: str) -> StopResponse:
     if instance_id not in _instances:
         raise HTTPException(status_code=404, detail="찾을 수 없는 인스턴스 ID입니다.")
-    # 실제 정리
     _cleanup_instance(instance_id)
     return StopResponse(instance_id=instance_id, message="인스턴스가 정상적으로 종료되었습니다.")
