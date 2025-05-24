@@ -6,7 +6,7 @@ authors = [
     {name = "rkdaudtjr",email = "kms0902k12@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "fastapi (>=0.115.12,<0.116.0)",
     "uvicorn[standard] (>=0.34.2,<0.35.0)",
@@ -15,7 +15,8 @@ dependencies = [
     "pydantic[email] (>=2.11.4,<3.0.0)",
     "passlib (>=1.7.4,<2.0.0)",
     "passlib[bcrypt] (>=1.7.4,<2.0.0)",
-    "bcrypt (>=4.3.0,<5.0.0)"
+    "bcrypt (>=4.3.0,<5.0.0)",
+    "docker (>=7.1.0,<8.0.0)"
 ]
 
 
