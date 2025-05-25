@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from container_routes import router as container_router
 from dotenv import load_dotenv
 
-load_dotenv()
+
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
 

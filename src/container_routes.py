@@ -1,4 +1,16 @@
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv()
+
+# Ensure FLAG is set for backend containers
+env_flag = os.environ.get("FLAG")
+if not env_flag:
+    raise RuntimeError(
+        "환경 변수 FLAG가 설정되지 않았습니다. Orchestrator 실행 시 반드시 FLAG 값을 설정하세요."
+    )
+
 import asyncio
 import socket
 import random
@@ -8,13 +20,6 @@ import docker
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Dict, Tuple
-
-# Read FLAG from orchestrator environment to pass into backend containers
-env_flag = os.environ.get("FLAG")
-if not env_flag:
-    raise RuntimeError(
-        "환경 변수 FLAG가 설정되지 않았습니다. Orchestrator 실행 시 반드시 FLAG 값을 설정하세요."
-    )
 
 router = APIRouter()
 client = docker.from_env()
@@ -96,23 +101,35 @@ async def _auto_cleanup(instance_id: str, ttl_sec: int = 3600):
 
 @router.post("/start", response_model=StartResponse)
 async def start_containers(req: StartRequest):
+    # Validate and cleanup old resources
     pid = req.problem_id
     cfg = PROBLEM_CONFIG.get(pid)
     if not cfg:
         raise HTTPException(400, detail="Invalid problem_id")
 
-    # stop existing
-    if pid in _active_by_problem:
-        _cleanup(_active_by_problem[pid])
+    # Remove leftover containers/networks for this problem
+    for ctr in client.containers.list(all=True):
+        if ctr.name.startswith(f"prob_{pid}_"):
+            try:
+                ctr.remove(force=True, v=True)
+            except Exception:
+                pass
+    for net in client.networks.list():
+        if net.name.startswith(f"prob_{pid}_"):
+            try:
+                net.remove()
+            except Exception:
+                pass
+    _active_by_problem.pop(pid, None)
 
-    # allocate ports
+    # Allocate host ports
     brange = cfg["host_range"]
     backend_port = _find_free_port(brange)
     frontend_port = _find_free_port(brange)
     while frontend_port == backend_port:
         frontend_port = _find_free_port(brange)
 
-    # create network
+    # Create isolated network
     net_name = f"prob_{pid}_{uuid.uuid4().hex[:8]}"
     try:
         network = client.networks.create(net_name, driver="bridge")
@@ -122,7 +139,7 @@ async def start_containers(req: StartRequest):
     be_name = f"{net_name}_be"
     fe_name = f"{net_name}_fe"
 
-    # launch backend
+    # Launch backend container
     try:
         backend = client.containers.run(
             image=cfg["backend_image"],
@@ -133,19 +150,20 @@ async def start_containers(req: StartRequest):
             environment={"FLAG": env_flag},
             remove=False
         )
-        # alias for internal DNS resolution
+        # Alias for internal DNS
         try:
-            network.connect(backend, aliases=["backend"])
-        except Exception:
+            network.disconnect(backend)
+        except:
             pass
+        network.connect(backend, aliases=["backend"])
     except Exception as e:
         try:
             network.remove()
-        except Exception:
+        except:
             pass
         raise HTTPException(500, detail=f"Backend launch failed: {e}")
 
-    # launch frontend
+    # Launch frontend container
     try:
         frontend = client.containers.run(
             image=cfg["frontend_image"],
@@ -161,11 +179,11 @@ async def start_containers(req: StartRequest):
             backend.stop(timeout=5)
             backend.remove(force=True, v=True)
             network.remove()
-        except Exception:
+        except:
             pass
         raise HTTPException(500, detail=f"Frontend launch failed: {e}")
 
-    # track instance
+    # Track instance
     instance_id = uuid.uuid4().hex
     _instances[instance_id] = {"backend": backend, "frontend": frontend, "network": network}
     _active_by_problem[pid] = instance_id
@@ -173,10 +191,8 @@ async def start_containers(req: StartRequest):
 
     return StartResponse(
         instance_id=instance_id,
-        backend_host="localhost",
-        backend_port=backend_port,
-        frontend_host="localhost",
-        frontend_port=frontend_port,
+        backend_host="localhost", backend_port=backend_port,
+        frontend_host="localhost", frontend_port=frontend_port,
         network=net_name
     )
 
