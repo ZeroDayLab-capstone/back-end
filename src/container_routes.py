@@ -36,6 +36,7 @@ PROBLEM_CONFIG: Dict[int, Dict[str, object]] = {
     8: {"frontend_image": "zeroday01478/reflected_xss:frontend", "backend_image": "zeroday01478/reflected_xss:backend", "host_range": (2000, 6000)},
     9: {"frontend_image": "zeroday01478/file-upload:frontend", "backend_image": "zeroday01478/file-upload:backend", "host_range": (2000, 6000)},
    10: {"frontend_image": "zeroday01478/path-traversal:frontend", "backend_image": "zeroday01478/path-traversal:backend", "host_range": (2000, 6000)},
+   11: {"frontend_image": "zeroday01478/sqli:frontend", "backend_image": "zeroday01478/sqli:backend", "host_range":(3000, 8000)},
 }
 
 # In-memory tracking
