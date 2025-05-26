@@ -53,51 +53,81 @@ class ProfileResponse(BaseModel):
 
 # 진행 중 실습 목록 조회
 @router.get(
-    "/ongoing-labs/{user_id}",
+    "/ongoing-labs/{email}",
     response_model=Dict[str, List[ProgressItem]],
     summary="사용자의 진행 중인 실습 목록 조회",
     description="사용자의 진행 상태가 'in-progress'인 lab_id 목록을 반환합니다.",
     status_code=status.HTTP_200_OK
 )
-def get_ongoing_labs(user_id: int, db: Session = Depends(get_db)):
+def get_ongoing_labs(email: str, db: Session = Depends(get_db)):  # email로 수정
+    user = db.query(User).filter(User.email == email).first()  # 이메일로 사용자 찾기
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
     records = db.query(UserLabProgress).filter(
-        UserLabProgress.user_id == user_id,
+        UserLabProgress.user_id == user.id,  # user_id로 실습 목록 조회
         UserLabProgress.status == "in-progress"
     ).all()
     return {"labs": [{"lab_id": r.lab_id} for r in records]}
 
 # 완료된 실습 목록 조회
 @router.get(
-    "/completed-labs/{user_id}",
+    "/completed-labs/{email}",
     response_model=Dict[str, List[ProgressItem]],
     summary="사용자의 완료된 실습 목록 조회",
     description="사용자의 진행 상태가 'completed'인 lab_id 목록을 반환합니다.",
     status_code=status.HTTP_200_OK
 )
-def get_completed_labs(user_id: int, db: Session = Depends(get_db)):
+def get_completed_labs(email: str, db: Session = Depends(get_db)):  # email로 수정
+    user = db.query(User).filter(User.email == email).first()  # 이메일로 사용자 찾기
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
     records = db.query(UserLabProgress).filter(
-        UserLabProgress.user_id == user_id,
+        UserLabProgress.user_id == user.id,  # user_id로 실습 목록 조회
         UserLabProgress.status == "completed"
     ).all()
     return {"labs": [{"lab_id": r.lab_id} for r in records]}
 
-# 프로필 수정
+# 프로필 수정 엔드포인트 추가
+@router.put(
+    "/profile/{email}",
+    response_model=MessageResponse,
+    summary="사용자 프로필 수정",
+    description="특정 사용자의 프로필을 수정합니다.",
+    status_code=status.HTTP_200_OK,
+    responses={404: {"description": "사용자를 찾을 수 없습니다"}}
+)
+def update_profile(email: str, data: ProfileUpdateRequest, db: Session = Depends(get_db)):  # email로 수정
+    user = db.query(User).filter(User.email == email).first()  # 이메일로 사용자 찾기
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
+    # 수정할 필드 업데이트
+    try:
+        user.username = data.username
+        user.email = data.email
+        user.password = hash_password(data.password)  # 비밀번호 해시 처리
+        user.gender = data.gender
+        user.nationality = data.nationality
+        user.job = data.job
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error updating user: {str(e)}")
 
     db.commit()
     return {"message": "Profile updated successfully"}
 
 # 프로필 조회 엔드포인트
 @router.get(
-    "/profile/{user_id}",
+    "/profile/{email}",
     response_model=ProfileResponse,
     summary="사용자 프로필 조회",
     description="특정 사용자의 프로필 정보를 반환합니다.",
     status_code=status.HTTP_200_OK,
     responses={404: {"description": "사용자를 찾을 수 없습니다"}}
 )
-def get_profile(user_id: int, db: Session = Depends(get_db)):  # user_id는 int로 유지
-    user = db.query(User).filter(User.id == user_id).first()  # user_id로 조회
+def get_profile(email: str, db: Session = Depends(get_db)):  # email로 수정
+    user = db.query(User).filter(User.email == email).first()  # 이메일로 사용자 찾기
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return ProfileResponse(
