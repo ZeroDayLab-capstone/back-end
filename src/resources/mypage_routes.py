@@ -82,28 +82,25 @@ def get_completed_labs(user_id: int, db: Session = Depends(get_db)):
     return {"labs": [{"lab_id": r.lab_id} for r in records]}
 
 # 프로필 수정
-@router.put(
+@router.get(
     "/profile/{user_id}",
-    response_model=MessageResponse,
-    summary="사용자 프로필 정보 수정",
-    description="사용자의 프로필 정보(사용자 이름, 이메일, 비밀번호, 성별, 국적, 직업)를 업데이트합니다.",
+    response_model=ProfileResponse,
+    summary="사용자 프로필 조회",
+    description="특정 사용자의 프로필 정보를 반환합니다.",
     status_code=status.HTTP_200_OK,
-    responses={
-        404: {"description": "사용자를 찾을 수 없습니다"},
-        400: {"description": "잘못된 요청 형식"}
-    }
+    responses={404: {"description": "사용자를 찾을 수 없습니다"}}
 )
-def update_profile(user_id: int, data: ProfileUpdateRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
+def get_profile(user_id: str, db: Session = Depends(get_db)):  # user_id를 str로 변경
+    user = db.query(User).filter(User.email == user_id).first()  # 이메일로 조회
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    user.username = data.username
-    user.email = data.email
-    user.password = hash_password(data.password)
-    user.gender = data.gender
-    user.nationality = data.nationality
-    user.job = data.job
+    return ProfileResponse(
+        username=user.username,
+        email=user.email,
+        gender=user.gender,
+        nationality=user.nationality,
+        job=user.job
+    )
 
     db.commit()
     return {"message": "Profile updated successfully"}
