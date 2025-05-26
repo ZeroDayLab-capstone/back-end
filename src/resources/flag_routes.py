@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-engine = create_engine("sqlite:///./flags.db", connect_args={"check_same_thread": False})
+engine = create_engine("sqlite:///./websec.db", connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
