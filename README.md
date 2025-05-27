@@ -2,25 +2,27 @@
 
 웹 보안 학습을 위한 실습(Lab) 플랫폼의 백엔드 API 서버입니다. 사용자 인증, 실습 진행, 설명 자료 제공 등의 기능을 제공합니다.
 
-##🛠️ 기술 스택
+## 🛠️ 기술 스택
 
-FastAPI: 고성능 Python 웹 프레임워크 (비동기 지원)
-SQLAlchemy: 데이터베이스 ORM 매핑 도구
-JWT (jose): 사용자 인증 및 권한 관리
-Pydantic: 데이터 모델링 및 유효성 검증
-Passlib: 비밀번호 해싱 및 검증
-python-dotenv: .env 파일 기반 환경 변수 설정
-Docker: 실습 환경 컨테이너화 및 자동 오케스트레이션
+- **FastAPI**: 고성능 Python 웹 프레임워크 (비동기 지원)  
+- **SQLAlchemy**: 데이터베이스 ORM 매핑 도구  
+- **JWT (jose)**: 사용자 인증 및 권한 관리  
+- **Pydantic**: 데이터 모델링 및 유효성 검증  
+- **Passlib**: 비밀번호 해싱 및 검증  
+- **python-dotenv**: `.env` 파일 기반 환경 변수 설정  
+- **Docker**: 실습 환경 컨테이너화 및 자동 오케스트레이션  
 
-##📋 주요 기능
+---
 
-🔐 사용자 회원가입 및 로그인, JWT 기반 인증 처리
-🧪 실습 환경 접속, 실습 상태 관리 (in-progress, completed)
-📝 실습 문제 답안 제출 및 정오 판별
-📚 보안 주제별 해설 자료 제공
-🏁 플래그 제출 및 검증 기능
-🛠 관리자 기능 (사용자 목록, 실습 생성/수정, 로그, 서버 상태)
-🐳 실습 컨테이너 자동 생성/삭제 오케스트레이터 기능
+## 📋 주요 기능
+
+- 🔐 사용자 회원가입 및 로그인, JWT 기반 인증 처리  
+- 🧪 실습 환경 접속, 실습 상태 관리 (`in-progress`, `completed`)  
+- 📝 실습 문제 답안 제출 및 정오 판별  
+- 📚 보안 주제별 해설 자료 제공  
+- 🏁 플래그 제출 및 검증 기능  
+- 🛠 관리자 기능 (사용자 목록, 실습 생성/수정, 로그, 서버 상태)  
+- 🐳 실습 컨테이너 자동 생성/삭제 오케스트레이터 기능  
 
 
 
@@ -83,40 +85,63 @@ BE/
 
 ## ✅ API 엔드포인트
 
- 🔐 인증 API
--POST /register: 사용자 회원가입
--POST /login: 사용자 로그인
--GET /me: 현재 사용자 정보 조회
+---
 
-🧪 실습 API
--POST /labs/environment: 실습 환경 접속 및 진행 시작
--POST /labs/submit: 실습 문제 답안 제출
+### 🔐 인증 API
 
-🧑‍💻 마이페이지 API
--GET /mypage/profile/{email}: 사용자 프로필 조회
--PUT /mypage/profile/{email}: 사용자 프로필 수정
--GET /mypage/ongoing-labs/{email}: 진행 중인 실습 조회
--GET /mypage/completed-labs/{email}: 완료된 실습 조회
+- *POST* `/register` : 사용자 회원가입  
+- *POST* `/login` : 사용자 로그인  
+- *GET* `/me` : 현재 사용자 정보 조회 (JWT 인증 필요)  
 
-📚 해설 API
--POST /resources/explanation: 보안 주제 설명 자료 조회
+---
 
-🏁 플래그 API
--POST /resources/submit_flag: 플래그 정답 여부 확인
+### 🧪 실습 API
 
-🛠 관리자 API
--GET /admin/users: 전체 사용자 목록
--POST /admin/labs: 새 실습 생성
--PUT /admin/labs/{lab_id}: 실습 수정
--GET /admin/user-results: 사용자 실습 결과 조회
--GET /admin/logs: 시스템 로그 조회
--GET /admin/server-status: 서버 상태 확인
+- *POST* `/labs/environment` : 실습 환경 접속 및 진행 상태 기록 (`in-progress`)  
+- *POST* `/labs/submit` : 실습 문제 답안 제출 및 정답 여부 판별  
 
-🐳 실습 컨테이너 오케스트레이터
--POST /start: 실습 컨테이너 시작
--POST /stop/{instance_id}: 컨테이너 중지 (인스턴스 ID 기준)
--POST /stop_by_problem/{problem_id}: 컨테이너 중지 (문제 ID 기준)
--GET /instances: 실행 중 컨테이너 목록 조회
+---
+
+### 🧑‍💻 마이페이지 API
+
+- *GET* `/mypage/profile/{email}` : 사용자 프로필 조회  
+- *PUT* `/mypage/profile/{email}` : 사용자 프로필 수정  
+- *GET* `/mypage/ongoing-labs/{email}` : 진행 중인 실습 목록 조회  
+- *GET* `/mypage/completed-labs/{email}` : 완료된 실습 목록 조회  
+
+---
+
+### 📚 해설 API
+
+- *POST* `/resources/explanation` : 보안 주제별 설명 자료 조회  
+
+---
+
+### 🏁 플래그 API
+
+- *POST* `/resources/submit_flag` : 플래그 정답 여부 확인  
+
+---
+
+### 🛠 관리자 API
+
+- *GET* `/admin/users` : 전체 사용자 목록 조회  
+- *POST* `/admin/labs` : 새 실습 문제 생성  
+- *PUT* `/admin/labs/{lab_id}` : 실습 문제 수정  
+- *GET* `/admin/user-results` : 사용자 실습 결과 조회  
+- *GET* `/admin/logs` : 시스템 로그 조회  
+- *GET* `/admin/server-status` : 서버 상태 확인  
+
+---
+
+### 🐳 실습 컨테이너 오케스트레이터
+
+- *POST* `/start` : 문제 ID 기반 컨테이너 실행  
+- *POST* `/stop/{instance_id}` : 인스턴스 ID 기준 컨테이너 중지  
+- *POST* `/stop_by_problem/{problem_id}` : 문제 ID 기준 컨테이너 중지  
+- *GET* `/instances` : 현재 실행 중인 컨테이너 목록 조회  
+
+
 
 
 
