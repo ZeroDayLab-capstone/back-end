@@ -128,7 +128,11 @@ async def start_containers(req: StartRequest):
     be_name = f"{net_name}_be"
     fe_name = f"{net_name}_fe"
 
-    # 백엔드 컨테이너 실행 (플래그 주입)
+    # 프로젝트 루트 및 BE/uploads 절대경로 계산
+    ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    UPLOADS_HOST_PATH = os.path.join(ROOT_DIR, "BE", "uploads")
+
+    # 백엔드 컨테이너 실행 (플래그 주입 + uploads 볼륨 마운트)
     try:
         backend = client.containers.run(
             image       = cfg["backend_image"],
@@ -137,6 +141,9 @@ async def start_containers(req: StartRequest):
             network     = net_name,
             ports       = {"8000/tcp": backend_port},
             environment = {"FLAG": cfg["flag"]},
+            volumes     = {
+                UPLOADS_HOST_PATH: {"bind": "/app/uploads", "mode": "rw"}
+            },
             remove      = False
         )
         # 내부 DNS 별칭
@@ -150,21 +157,33 @@ async def start_containers(req: StartRequest):
 
     # 프론트엔드 컨테이너 실행
     try:
+        if pid == 10:
+            # Path-Traversal 문제: BACKEND_URL 및 uploads 볼륨 마운트
+            env  = {"BACKEND_URL": "http://backend:8000"}
+            vols = {UPLOADS_HOST_PATH: {"bind": "/app/uploads", "mode": "rw"}}
+        else:
+            # 그 외 문제: 기존 방식
+            env  = {"API_URL": "http://backend:8000"}
+            vols = {}
+
         frontend = client.containers.run(
             image       = cfg["frontend_image"],
             name        = fe_name,
             detach      = True,
             network     = net_name,
             ports       = {"80/tcp": frontend_port},
-            environment = {"API_URL": "http://backend:8000"},
+            environment = env,
+            volumes     = vols,
             remove      = False
         )
     except Exception as e:
         # 실패 시 뒤처리
         try:
-            backend.stop(timeout=5); backend.remove(force=True, v=True)
+            backend.stop(timeout=5)
+            backend.remove(force=True, v=True)
             network.remove()
-        except: pass
+        except:
+            pass
         raise HTTPException(500, detail=f"Frontend launch failed: {e}")
 
     # 인스턴스 기록 및 자동 삭제 스케줄링
@@ -175,8 +194,10 @@ async def start_containers(req: StartRequest):
 
     return StartResponse(
         instance_id   = instance_id,
-        backend_host  = "localhost", backend_port  = backend_port,
-        frontend_host = "localhost", frontend_port = frontend_port,
+        backend_host  = "localhost",
+        backend_port  = backend_port,
+        frontend_host = "localhost",
+        frontend_port = frontend_port,
         network       = net_name
     )
 
