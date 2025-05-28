@@ -155,15 +155,23 @@ async def start_containers(req: StartRequest):
         except: pass
         raise HTTPException(500, detail=f"Backend launch failed: {e}")
 
-    # 프론트엔드 컨테이너 실행
+        # ── 프론트엔드 컨테이너 실행 ─────────────────────────────────────────
     try:
         if pid == 10:
-            # Path-Traversal 문제: BACKEND_URL 및 uploads 볼륨 마운트
-            env  = {"BACKEND_URL": "http://backend:8000"}
-            vols = {UPLOADS_HOST_PATH: {"bind": "/app/uploads", "mode": "rw"}}
+            # Path-Traversal 문제: BACKEND_URL + API_BASE, uploads 볼륨
+            env = {
+                "BACKEND_URL": "http://backend:8000",
+                "API_BASE":    "http://backend:8000",
+            }
+            vols = {
+                UPLOADS_HOST_PATH: {"bind": "/app/uploads", "mode": "rw"}
+            }
         else:
-            # 그 외 문제: 기존 방식
-            env  = {"API_URL": "http://backend:8000"}
+            # 그 외 문제: API_URL + API_BASE
+            env = {
+                "API_URL":  "http://backend:8000",
+                "API_BASE": "http://backend:8000",
+            }
             vols = {}
 
         frontend = client.containers.run(
@@ -177,6 +185,15 @@ async def start_containers(req: StartRequest):
             remove      = False
         )
     except Exception as e:
+        # 실패 시 뒤처리
+        try:
+            backend.stop(timeout=5)
+            backend.remove(force=True, v=True)
+            network.remove()
+        except:
+            pass
+        raise HTTPException(500, detail=f"Frontend launch failed: {e}")
+
         # 실패 시 뒤처리
         try:
             backend.stop(timeout=5)
