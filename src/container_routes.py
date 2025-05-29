@@ -213,9 +213,11 @@ async def start_containers(req: StartRequest):
 
     return StartResponse(
         instance_id   = instance_id,
-        backend_host  = "localhost",
+        # backend_host  = "localhost",
+        backend_host  = "100.108.98.2",
         backend_port  = backend_port,
-        frontend_host = "localhost",
+        # frontend_host = "localhost",
+        frontend_host = "100.108.98.2",
         frontend_port = frontend_port,
         network       = net_name
     )
