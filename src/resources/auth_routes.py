@@ -146,18 +146,3 @@ def read_current_user(current_user: User = Depends(get_current_user)):
         "nationality": current_user.nationality,
         "job": current_user.job
     }
-
-#보호된 라우트 예시
-#@router.get(
-   # "/flag", 
-    #response_model=MessageResponse,
-    #summary="보호된 플래그 조회",
-    #description="인증된 사용자만 접근할 수 있는 보호된 플래그를 반환합니다.",
-    #response_description="플래그 메시지",
-    #status_code=status.HTTP_200_OK,
-    #responses={
-    #  401: {"description": "인증 실패 - 유효한 JWT 토큰 필요"}
-    #}
- #)
-#def get_flag(current_user: str = Depends(get_current_user)):
-    #return {"message": f"FLAG{{you_are_{current_user}}}"}
