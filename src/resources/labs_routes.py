@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from database import SessionLocal
-from models import Lab, UserLabProgress
+from models import Lab, UserLabProgress, User
 
 router = APIRouter(
     prefix="/labs",
@@ -19,14 +19,14 @@ def get_db():
 
 # 요청/응답 모델
 class EnvironmentRequest(BaseModel):
-    user_id: int
+    email: EmailStr
     lab_id: int
 
 class URLResponse(BaseModel):
     url: str
 
 class SubmitAnswerRequest(BaseModel):
-    user_id: int
+    email: EmailStr
     lab_id: int
     answer: str
 
@@ -42,14 +42,17 @@ class ResultResponse(BaseModel):
     status_code=status.HTTP_200_OK
 )
 def start_lab(data: EnvironmentRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == data.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     url = "http://lab.localhost:8001"
     prog = db.query(UserLabProgress).filter(
-        UserLabProgress.user_id == data.user_id,
+        UserLabProgress.user_id == user.id,
         UserLabProgress.lab_id == data.lab_id
     ).first()
     if not prog:
         prog = UserLabProgress(
-            user_id=data.user_id,
+            user_id=user.id,
             lab_id=data.lab_id,
             status="in-progress",
             is_correct=False
@@ -68,12 +71,15 @@ def start_lab(data: EnvironmentRequest, db: Session = Depends(get_db)):
     responses={404: {"description": "실습을 찾을 수 없습니다"}}
 )
 def submit_answer(data: SubmitAnswerRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == data.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     lab = db.query(Lab).filter(Lab.id == data.lab_id).first()
     if not lab:
         raise HTTPException(status_code=404, detail="Lab not found")
 
     prog = db.query(UserLabProgress).filter(
-        UserLabProgress.user_id == data.user_id,
+        UserLabProgress.user_id == user.id,
         UserLabProgress.lab_id == data.lab_id
     ).first()
 
@@ -82,7 +88,7 @@ def submit_answer(data: SubmitAnswerRequest, db: Session = Depends(get_db)):
 
     if not prog:
         prog = UserLabProgress(
-            user_id=data.user_id,
+            user_id=user.id,
             lab_id=data.lab_id,
             status=status_str,
             is_correct=correct
