@@ -198,7 +198,7 @@ async def start_containers(req: StartRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to write FE flag.txt: {e}")
 
-    # ───────────────────── 백엔드 컨테이너 실행 ─────────────────────
+   # ───────────────────── 백엔드 컨테이너 실행 ─────────────────────
     try:
         backend = client.containers.run(
             image       = cfg["backend_image"],
@@ -206,7 +206,11 @@ async def start_containers(req: StartRequest):
             detach      = True,
             network     = net_name,
             ports       = {"8000/tcp": backend_port},
-            environment = {"FLAG": cfg["flag"]},
+            environment = {
+                "FLAG": cfg["flag"],
+                "FE_URL": f"http://{fe_name}:80",
+                "ADMIN_TRUE_SESSION_VALUE": "9a7d4e5c3b6a1f2e8c0d4b3a5e9f6c2b",  # 하드코딩된 어드민 세션 ID
+            },
             volumes     = {
                 UPLOADS_HOST_PATH: {"bind": "/app/uploads", "mode": "rw"}
             },
@@ -223,6 +227,7 @@ async def start_containers(req: StartRequest):
         except:
             pass
         raise HTTPException(status_code=500, detail=f"Backend launch failed: {e}")
+
 
     # ───────────────────── 프론트엔드 컨테이너 실행 ─────────────────────
     try:

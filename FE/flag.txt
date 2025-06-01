@@ -1,1 +1,1 @@
-<여기에 file-upload 플래그>
+<여기에 reflected_xss 플래그>
