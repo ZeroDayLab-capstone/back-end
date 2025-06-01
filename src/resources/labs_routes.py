@@ -1,13 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
-from database import SessionLocal
-from models import User, Lab, UserLabProgress
-from resources.auth_routes import get_current_user  # JWT 인증 함수
 from pydantic import BaseModel
+from database import SessionLocal
+from models import Lab, UserLabProgress
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/labs",
+    tags=["labs"],
+    responses={500: {"description": "Internal Server Error"}}
+)
 
-# DB 세션 헬퍼 함수
 def get_db():
     db = SessionLocal()
     try:
@@ -15,43 +17,80 @@ def get_db():
     finally:
         db.close()
 
-# 답안 제출용 요청 모델
+# 요청/응답 모델
+class EnvironmentRequest(BaseModel):
+    user_id: int
+    lab_id: int
+
+class URLResponse(BaseModel):
+    url: str
+
 class SubmitAnswerRequest(BaseModel):
+    user_id: int
     lab_id: int
     answer: str
-    email: str = None  # email도 받을 수 있게 (선택)
 
-# 정답 제출 라우트 (JWT + email 모두 지원)
-@router.post("/submit")
-def submit_answer(
-    req: SubmitAnswerRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    # 1. 유저 정보 가져오기 (email 있으면 email 우선, 아니면 JWT 토큰)
-    if req.email:
-        user = db.query(User).filter(User.email == req.email).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="해당 이메일의 사용자가 없습니다.")
-    else:
-        user = current_user
+class ResultResponse(BaseModel):
+    status: str
 
-    # 2. 진행중 실습 찾기
+# 실습 시작: in-progress 기록 생성
+@router.post(
+    "/environment",
+    response_model=URLResponse,
+    summary="실습 환경 접속 및 진행 시작",
+    description="실습을 시작하면 진행 상태를 'in-progress'로 기록합니다.",
+    status_code=status.HTTP_200_OK
+)
+def start_lab(data: EnvironmentRequest, db: Session = Depends(get_db)):
+    url = "http://lab.localhost:8001"
     prog = db.query(UserLabProgress).filter(
-        UserLabProgress.user_id == user.id,
-        UserLabProgress.lab_id == req.lab_id
+        UserLabProgress.user_id == data.user_id,
+        UserLabProgress.lab_id == data.lab_id
     ).first()
     if not prog:
-        raise HTTPException(404, "진행중인 실습이 없습니다.")
+        prog = UserLabProgress(
+            user_id=data.user_id,
+            lab_id=data.lab_id,
+            status="in-progress",
+            is_correct=False
+        )
+        db.add(prog)
+        db.commit()
+    return {"url": url}
 
-    # 3. 정답 체크(실습 테이블 answer 필드 비교, 필요 없으면 이 부분 빼도 됨)
-    lab = db.query(Lab).filter(Lab.id == req.lab_id).first()
+# 문제 제출: 진행/완료 상태 업데이트
+@router.post(
+    "/submit",
+    response_model=ResultResponse,
+    summary="실습 문제 답안 제출",
+    description="답안 검증 후 진행 상태를 업데이트합니다.",
+    status_code=status.HTTP_200_OK,
+    responses={404: {"description": "실습을 찾을 수 없습니다"}}
+)
+def submit_answer(data: SubmitAnswerRequest, db: Session = Depends(get_db)):
+    lab = db.query(Lab).filter(Lab.id == data.lab_id).first()
     if not lab:
-        raise HTTPException(404, "해당 실습 문제 없음")
+        raise HTTPException(status_code=404, detail="Lab not found")
 
-    is_correct = (lab.answer.strip().lower() == req.answer.strip().lower())
-    # 4. 완료로 상태 변경
-    prog.status = "completed"
-    prog.is_correct = is_correct
+    prog = db.query(UserLabProgress).filter(
+        UserLabProgress.user_id == data.user_id,
+        UserLabProgress.lab_id == data.lab_id
+    ).first()
+
+    correct = data.answer.strip().lower() == lab.answer.strip().lower()
+    status_str = "completed" if correct else "in-progress"
+
+    if not prog:
+        prog = UserLabProgress(
+            user_id=data.user_id,
+            lab_id=data.lab_id,
+            status=status_str,
+            is_correct=correct
+        )
+        db.add(prog)
+    else:
+        prog.status = status_str
+        prog.is_correct = correct
+
     db.commit()
-    return {"result": "완료", "정답여부": is_correct}
+    return {"status": status_str}
