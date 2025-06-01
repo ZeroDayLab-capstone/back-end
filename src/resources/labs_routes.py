@@ -22,30 +22,27 @@ class EnvironmentRequest(BaseModel):
     email: EmailStr
     lab_id: int
 
-class URLResponse(BaseModel):
-    url: str
+class SimpleResponse(BaseModel):
+    status: str
 
 class SubmitAnswerRequest(BaseModel):
     email: EmailStr
     lab_id: int
-    answer: str
+    is_correct: bool   # 프론트에서 판단해서 전달
+    status: str        # "completed" or "in-progress"
 
-class ResultResponse(BaseModel):
-    status: str
-
-# 실습 시작: in-progress 기록 생성
+# 실습 시작: in-progress 기록만 생성 (url X)
 @router.post(
     "/environment",
-    response_model=URLResponse,
-    summary="실습 환경 접속 및 진행 시작",
-    description="실습을 시작하면 진행 상태를 'in-progress'로 기록합니다.",
+    response_model=SimpleResponse,
+    summary="실습 환경 시작(진행 상태만 기록)",
+    description="이메일과 실습 ID만 받아 진행 상태를 'in-progress'로 기록. URL 반환 없음.",
     status_code=status.HTTP_200_OK
 )
 def start_lab(data: EnvironmentRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == data.email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    url = "http://lab.localhost:8001"
     prog = db.query(UserLabProgress).filter(
         UserLabProgress.user_id == user.id,
         UserLabProgress.lab_id == data.lab_id
@@ -59,14 +56,19 @@ def start_lab(data: EnvironmentRequest, db: Session = Depends(get_db)):
         )
         db.add(prog)
         db.commit()
-    return {"url": url}
+    else:
+        if prog.status != "in-progress":
+            prog.status = "in-progress"
+            prog.is_correct = False
+            db.commit()
+    return {"status": "in-progress"}
 
-# 문제 제출: 진행/완료 상태 업데이트
+# 문제 제출: 결과만 기록 (프론트에서 정오/상태 판단)
 @router.post(
     "/submit",
-    response_model=ResultResponse,
+    response_model=SimpleResponse,
     summary="실습 문제 답안 제출",
-    description="답안 검증 후 진행 상태를 업데이트합니다.",
+    description="프론트에서 판단된 답안 결과를 저장합니다. status만 반환.",
     status_code=status.HTTP_200_OK,
     responses={404: {"description": "실습을 찾을 수 없습니다"}}
 )
@@ -74,29 +76,20 @@ def submit_answer(data: SubmitAnswerRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == data.email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    lab = db.query(Lab).filter(Lab.id == data.lab_id).first()
-    if not lab:
-        raise HTTPException(status_code=404, detail="Lab not found")
-
     prog = db.query(UserLabProgress).filter(
         UserLabProgress.user_id == user.id,
         UserLabProgress.lab_id == data.lab_id
     ).first()
-
-    correct = data.answer.strip().lower() == lab.answer.strip().lower()
-    status_str = "completed" if correct else "in-progress"
-
     if not prog:
         prog = UserLabProgress(
             user_id=user.id,
             lab_id=data.lab_id,
-            status=status_str,
-            is_correct=correct
+            status=data.status,
+            is_correct=data.is_correct
         )
         db.add(prog)
     else:
-        prog.status = status_str
-        prog.is_correct = correct
-
+        prog.status = data.status
+        prog.is_correct = data.is_correct
     db.commit()
-    return {"status": status_str}
+    return {"status": data.status}
