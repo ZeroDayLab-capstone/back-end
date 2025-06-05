@@ -20,61 +20,61 @@ PROBLEM_CONFIG: Dict[int, Dict[str, object]] = {
         "host_range":     (2000, 5000),
         "flag":           "FLAG{9c926de27b8995b218c8b1f51806ce21}",
     },
-    2: {
+    3: {
         "frontend_image": "zeroday01478/sqli2:frontend",
         "backend_image":  "zeroday01478/sqli2:backend",
         "host_range":     (3000, 8000),
         "flag":           "<여기에 sqli2 플래그>",
     },
-    3: {
+    4: {
         "frontend_image": "zeroday01478/sqli3:frontend",
         "backend_image":  "zeroday01478/sqli3:backend",
         "host_range":     (3000, 8000),
         "flag":           "<여기에 sqli3 플래그>",
     },
-    4: {
+    5: {
         "frontend_image": "zeroday01478/command:frontend",
         "backend_image":  "zeroday01478/command:backend",
         "host_range":     (2000, 6000),
         "flag":           "<여기에 command 플래그>",
     },
-    5: {
+    6: {
         "frontend_image": "zeroday01478/stored_xss_1:frontend",
         "backend_image":  "zeroday01478/stored_xss_1:backend",
         "host_range":     (2000, 6000),
         "flag":           "<여기에 stored_xss_1 플래그>",
     },
-    6: {
+    7: {
         "frontend_image": "zeroday01478/stored_xss_2:frontend",
         "backend_image":  "zeroday01478/stored_xss_2:backend",
         "host_range":     (2000, 6000),
         "flag":           "<여기에 stored_xss_2 플래그>",
     },
-    7: {
+    8: {
         "frontend_image": "zeroday01478/stored_xss_3:frontend",
         "backend_image":  "zeroday01478/stored_xss_3:backend",
         "host_range":     (2000, 6000),
         "flag":           "<여기에 stored_xss_3 플래그>",
     },
-    8: {
+    9: {
         "frontend_image": "zeroday01478/reflected_xss:frontend",
         "backend_image":  "zeroday01478/reflected_xss:backend",
         "host_range":     (2000, 6000),
         "flag":           "<여기에 reflected_xss 플래그>",
     },
-    9: {
+    10: {
         "frontend_image": "zeroday01478/file-upload:frontend",
         "backend_image":  "zeroday01478/file-upload:backend",
         "host_range":     (2000, 6000),
         "flag":           "<여기에 file-upload 플래그>",
     },
-    10: {
+    11: {
         "frontend_image": "zeroday01478/path-traversal:frontend",
         "backend_image":  "zeroday01478/path-traversal:backend",
         "host_range":     (2000, 6000),
         "flag":           "<여기에 path-traversal 플래그>",
     },
-    11: {
+    2: {
         "frontend_image": "zeroday01478/sqli:frontend",
         "backend_image":  "zeroday01478/sqli:backend",
         "host_range":     (3000, 8000),
@@ -231,7 +231,7 @@ async def start_containers(req: StartRequest):
 
     # ───────────────────── 프론트엔드 컨테이너 실행 ─────────────────────
     try:
-        if pid == 10:
+        if pid == 11:
             # Path-Traversal 문제: uploads + flag.txt 마운트
             env = {
                 "BACKEND_URL": "http://backend:8000",
