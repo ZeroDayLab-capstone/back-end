@@ -91,7 +91,12 @@ BE/
 
 - *POST* `/register` : 사용자 회원가입  
 - *POST* `/login` : 사용자 로그인  
-- *GET* `/me` : 현재 사용자 정보 조회 (JWT 인증 필요)  
+- *GET* `/me` : 현재 사용자 정보 조회 (JWT 인증 필요)
+- *POST* `/find-id` : 이름과 휴대폰 번호로 아이디(이메일) 찾기
+- *POST* `/password-reset/request` : 비밀번호 재설정 이메일 발송
+- *POST* `/password-reset/confirm` : 비밀번호 재설정 완료
+
+
 
 ---
 
@@ -105,7 +110,9 @@ BE/
 ### 🧑‍💻 마이페이지 API
 
 - *GET* `/mypage/profile/{email}` : 사용자 프로필 조회  
-- *PUT* `/mypage/profile/{email}` : 사용자 프로필 수정  
+- *PUT* `/mypage/profile/{email}` : 사용자 프로필 수정
+- *PUT* `/mypage/profile/image` : 프로필 사진 업로드/수정 (multipart/form-data)
+- *DELETE* `/mypage/profile/image` : 프로필 사진 삭제 (기본 이미지로 초기화) 
 - *GET* `/mypage/ongoing-labs/{email}` : 진행 중인 실습 목록 조회  
 - *GET* `/mypage/completed-labs/{email}` : 완료된 실습 목록 조회  
 
@@ -141,9 +148,20 @@ BE/
 - *POST* `/stop_by_problem/{problem_id}` : 문제 ID 기준 컨테이너 중지  
 - *GET* `/instances` : 현재 실행 중인 컨테이너 목록 조회  
 
+---
 
+### 📝 Q&A 게시판 API
 
+- *GET* `/qna/posts` : 전체 게시글 목록 조회
+- *POST* `/qna/posts` : 게시글 작성 (로그인 필요)
+- *GET* `/qna/posts/{post_id}` : 게시글 상세 및 댓글 조회
+- *PUT* `/qna/posts/{post_id}` : 게시글 수정 (작성자/관리자)
+- *DELETE* `/qna/posts/{post_id}` : 게시글 삭제 (작성자/관리자)
+- *POST* `/qna/posts/{post_id}/comments` : 댓글 작성 (로그인 필요)
+- *PUT* `/qna/comments/{comment_id}` : 댓글 수정 (작성자/관리자)
+- *DELETE* `/qna/comments/{comment_id}` : 댓글 삭제 (작성자/관리자)
 
+---
 
 ## 📝 주의사항
 - 프로덕션 환경에서는 SECRET_KEY를 안전하게 관리하세요.
