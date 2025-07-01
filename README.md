@@ -153,13 +153,13 @@ BE/
 ### 📝 Q&A 게시판 API
 
 - *GET* `/qna/posts` : 전체 게시글 목록 조회
-- *POST* `/qna/posts` : 게시글 작성 (로그인 필요)
+- *POST* `/qna/posts` : 게시글 작성 
 - *GET* `/qna/posts/{post_id}` : 게시글 상세 및 댓글 조회
-- *PUT* `/qna/posts/{post_id}` : 게시글 수정 (작성자/관리자)
-- *DELETE* `/qna/posts/{post_id}` : 게시글 삭제 (작성자/관리자)
-- *POST* `/qna/posts/{post_id}/comments` : 댓글 작성 (로그인 필요)
-- *PUT* `/qna/comments/{comment_id}` : 댓글 수정 (작성자/관리자)
-- *DELETE* `/qna/comments/{comment_id}` : 댓글 삭제 (작성자/관리자)
+- *PUT* `/qna/posts/{post_id}` : 게시글 수정 
+- *DELETE* `/qna/posts/{post_id}` : 게시글 삭제 
+- *POST* `/qna/posts/{post_id}/comments` : 댓글 작성 
+- *PUT* `/qna/comments/{comment_id}` : 댓글 수정 
+- *DELETE* `/qna/comments/{comment_id}` : 댓글 삭제
 
 ---
 
