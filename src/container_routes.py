@@ -12,7 +12,7 @@ from typing import Dict, Tuple
 router = APIRouter()
 client = docker.from_env()
 
-# ── 문제별 이미지, 포트 범위, 플래그 정의 ─────────────────────────────────
+# ── 문제별 이미지, 포트 범위, 플래그 정의 ────────────────────────────────
 PROBLEM_CONFIG: Dict[int, Dict[str, object]] = {
     1: {
         "frontend_image": "zeroday01478/csrf:frontend",
