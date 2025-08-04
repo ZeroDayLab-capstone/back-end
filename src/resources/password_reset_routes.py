@@ -37,7 +37,7 @@ def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
 # 1. 인증코드 발송
-@router.post("/send-reset-code")
+@router.post("/send-reset-code", summary="인증코드 발송", description="사용자의 이메일로 인증코드를 발송합니다.")
 def send_reset_code(data: ResetCodeRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == data.email).first()
     if not user:
@@ -53,7 +53,7 @@ def send_reset_code(data: ResetCodeRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="이메일 발송 실패")
 
 # 2. 인증코드 확인
-@router.post("/verify-reset-code")
+@router.post("/verify-reset-code", summary="인증코드 확인", description="사용자가 입력한 인증코드를 검증합니다.")
 def verify_code(data: VerifyCodeRequest):
     saved_code = reset_codes.get(data.email)
     if saved_code != data.code:
@@ -61,7 +61,7 @@ def verify_code(data: VerifyCodeRequest):
     return {"message": "인증 성공"}
 
 # 3. 비밀번호 재설정
-@router.post("/reset-password")
+@router.post("/reset-password", summary="비밀번호 재설정", description="인증된 사용자에게 새 비밀번호를 설정합니다.")
 def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
     if data.email not in reset_codes:
         raise HTTPException(status_code=403, detail="인증되지 않은 사용자입니다.")
