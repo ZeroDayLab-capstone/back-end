@@ -6,7 +6,7 @@ from database import Base, engine
 from fastapi.middleware.cors import CORSMiddleware
 from container_routes import router as container_router
 from dotenv import load_dotenv
-
+from resources import password_reset_routes
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -18,6 +18,7 @@ app.include_router(labs_routes.router, prefix="/labs")     # 실습페이지 API
 app.include_router(admin_routes.router, prefix="/admin")   # 관리자페이지 API
 app.include_router(flag_routes.router, prefix="/flag")     # 플래그 제출 API
 app.include_router(container_router, prefix="/containers")
+app.include_router(password_reset_routes.router, prefix="/auth")
 
 # 🔥 CORS 설정 추가
 app.add_middleware(
