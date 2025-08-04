@@ -26,5 +26,12 @@ def send_reset_code_email(to_email: str, code: str) -> bool:
             server.sendmail(SMTP_USER, to_email, msg.as_string())
         return True
     except Exception as e:
-        print(f"[이메일 전송 실패] {e}")
+        print("\n🛑 이메일 전송 실패 로그 🛑")
+        print("에러 종류:", type(e).__name__)
+        print("에러 메시지:", str(e))
         return False
+
+# 테스트용 단독 실행 코드
+if __name__ == "__main__":
+    result = send_reset_code_email("test@example.com", "123456")
+    print("전송 결과:", result)
