@@ -153,7 +153,7 @@ async def _auto_cleanup(instance_id: str, ttl_sec: int = 3600):
     _cleanup(instance_id)
 
 # ── Start API ───────────────────────────────────────────────────────
-@router.post("/start", response_model=StartResponse)
+@router.post("/start", response_model=StartResponse, summary="실습 컨테이너 시작", description="문제 ID를 기반으로 컨테이너를 생성하고 실행합니다.")
 async def start_containers(req: StartRequest):
     pid = req.problem_id
     cfg = PROBLEM_CONFIG.get(pid)
@@ -297,7 +297,7 @@ async def start_containers(req: StartRequest):
     )
 
 # ── Stop by instance ID API ────────────────────────────────────────────
-@router.post("/stop/{instance_id}", response_model=StopResponse)
+@router.post("/stop/{instance_id}", response_model=StopResponse, summary="실습 컨테이너 중지", description="인스턴스 ID를 기반으로 실행 중인 컨테이너를 중지하고 정리합니다.")
 def stop_by_id(instance_id: str):
     if instance_id not in _instances:
         raise HTTPException(status_code=404, detail="Instance not found")
@@ -305,7 +305,7 @@ def stop_by_id(instance_id: str):
     return StopResponse(instance_id=instance_id, message="Stopped and cleaned up")
 
 # ── Stop by problem ID API ─────────────────────────────────────────────
-@router.post("/stop_by_problem/{problem_id}", response_model=StopResponse)
+@router.post("/stop_by_problem/{problem_id}", response_model=StopResponse, summary="문제 ID로 컨테이너 중지", description="문제 ID를 기반으로 실행 중인 인스턴스를 중지하고 정리합니다.")
 def stop_by_problem(problem_id: int):
     iid = _active_by_problem.get(problem_id)
     if not iid:
@@ -314,7 +314,7 @@ def stop_by_problem(problem_id: int):
     return StopResponse(instance_id=iid, message="Stopped and cleaned up")
 
 # ── List active instances ─────────────────────────────────────────────
-@router.get("/instances")
+@router.get("/instances", summary="실행 중인 인스턴스 목록", description="현재 실행 중인 문제 ID와 인스턴스 ID 매핑을 반환합니다.")
 def list_instances():
     """
     현재 실행 중인 문제 ID와 인스턴스 ID 매핑을 반환합니다.
