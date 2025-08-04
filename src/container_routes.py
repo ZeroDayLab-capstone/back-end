@@ -80,6 +80,12 @@ PROBLEM_CONFIG: Dict[int, Dict[str, object]] = {
         "host_range":     (3000, 8000),
         "flag":           "<여기에 sqli 플래그>",
     },
+    12:{
+        "frontend_image": "zeroday01478/csrf_2:frontend",
+        "backend_image":  "zeroday01478/csrf_2:backend",
+        "host_range":     (3000, 8000),
+        "flag":           "FLAG{e7f93a6d12b849f38c7d2e40a9b5c8f2}",
+    }
 }
 
 # ── 인스턴스 추적용 전역 변수 ───────────────────────────────────────────
