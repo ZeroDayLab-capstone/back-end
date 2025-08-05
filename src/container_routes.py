@@ -85,6 +85,12 @@ PROBLEM_CONFIG: Dict[int, Dict[str, object]] = {
         "backend_image":  "zeroday01478/csrf_2:backend",
         "host_range":     (3000, 8000),
         "flag":           "FLAG{e7f93a6d12b849f38c7d2e40a9b5c8f2}",
+    },
+    13:{
+        "frontend_image": "zeroday01478/file-upload-2:frontend",
+        "backend_image":  "zeroday01478/file-upload-2:backend",
+        "host_range":     (3000, 8000),
+        "flag":           "<여기에 file-upload-2 플래그>",
     }
 }
 
