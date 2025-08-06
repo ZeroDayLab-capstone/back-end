@@ -85,6 +85,12 @@ PROBLEM_CONFIG: Dict[int, Dict[str, object]] = {
         "backend_image":  "zeroday01478/csrf_2:backend",
         "host_range":     (3000, 8000),
         "flag":           "FLAG{e7f93a6d12b849f38c7d2e40a9b5c8f2}",
+    },
+    13:{
+        "frontend_image": "zeroday01478/csrf_3:frontend",
+        "backend_image":  "zeroday01478/csrf_3:backend",
+        "host_range":     (3000, 8000),
+        "flag":           "FLAG{4b2f8e7c19d94a23a7e1c5f8092ad6f0}",
     }
 }
 
