@@ -1,1 +1,1 @@
-FLAG{e7f93a6d12b849f38c7d2e40a9b5}
+<여기에 command_2 플래그>

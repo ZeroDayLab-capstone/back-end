@@ -91,7 +91,13 @@ PROBLEM_CONFIG: Dict[int, Dict[str, object]] = {
         "backend_image":  "zeroday01478/csrf_3:backend",
         "host_range":     (3000, 8000),
         "flag":           "FLAG{4b2f8e7c19d94a23a7e1c5f8092ad6f0}",
-    }
+    },
+    14:{
+        "frontend_image": "zeroday01478/command_2:latest",
+        "backend_image":  "zeroday01478/command_2:latest", # 백엔드와 프론트엔드 이미지가 같은 경우
+        "host_range":     (2000, 6000),
+        "flag":           "FLAG{9a6b3e18d7c245f3b1e9a6c47d92f0e8}",
+    },
 }
 
 # ── 인스턴스 추적용 전역 변수 ───────────────────────────────────────────
