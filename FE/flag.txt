@@ -1,1 +1,1 @@
-<여기에 command_2 플래그>
+FLAG{ssrf_basic_localhost_bypass}

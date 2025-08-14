@@ -98,6 +98,12 @@ PROBLEM_CONFIG: Dict[int, Dict[str, object]] = {
         "host_range":     (2000, 6000),
         "flag":           "FLAG{9a6b3e18d7c245f3b1e9a6c47d92f0e8}",
     },
+    15:{
+        "frontend_image": "zeroday01478/ssrf:frontend",
+        "backend_image":  "zeroday01478/ssrf:backend", 
+        "host_range":     (2000, 6000),
+        "flag":           "FLAG{ssrf_basic_localhost_bypass}",
+    },
 }
 
 # ── 인스턴스 추적용 전역 변수 ───────────────────────────────────────────
