@@ -1,41 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List
 from database import SessionLocal
-from models import User
+from models import User, QnAPost, QnAComment  # ✅ 모델은 models.py에서 import
 from resources.auth_routes import get_current_user
-from sqlalchemy import Column, Integer, Text, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
-from datetime import datetime
-from database import Base
 
 # FastAPI 라우터
 router = APIRouter(prefix="/qna/posts", tags=["qna"])
-
-# ======================== DB 모델 ========================
-
-class QnAPost(Base):
-    __tablename__ = "qna_posts"
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(Text, nullable=False)
-    content = Column(Text, nullable=False)
-    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    author = relationship("User")
-    comments = relationship("QnAComment", back_populates="post")
-
-class QnAComment(Base):
-    __tablename__ = "qna_comments"
-    id = Column(Integer, primary_key=True, index=True)
-    content = Column(Text, nullable=False)
-    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    post_id = Column(Integer, ForeignKey("qna_posts.id"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    author = relationship("User")
-    post = relationship("QnAPost", back_populates="comments")
 
 # ======================== Pydantic Schemas ========================
 
@@ -115,8 +87,14 @@ def get_post_detail(post_id: int, db: Session = Depends(get_db)):
         "author": c.author.username,
         "created_at": c.created_at.isoformat()
     } for c in post.comments]
-    return PostDetail(id=post.id, title=post.title, author=post.author.username,
-                      created_at=post.created_at.isoformat(), content=post.content, comments=comments)
+    return PostDetail(
+        id=post.id,
+        title=post.title,
+        author=post.author.username,
+        created_at=post.created_at.isoformat(),
+        content=post.content,
+        comments=comments
+    )
 
 @router.put(
     "/{post_id}",
