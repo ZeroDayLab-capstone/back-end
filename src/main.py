@@ -10,6 +10,7 @@ from resources import password_reset_routes
 from resources import id_find_routes
 from resources.qna_routes import router as qna_router  # ✅ QnA 라우터
 import models  # ✅ 모델 인식용
+from fastapi.staticfiles import StaticFiles
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -24,6 +25,7 @@ app.include_router(container_router, prefix="/containers")
 app.include_router(password_reset_routes.router, prefix="/auth")
 app.include_router(id_find_routes.router)
 app.include_router(qna_router, prefix="/qna")                  # ✅ QnA 라우터
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # 🔥 CORS 설정 추가
 app.add_middleware(

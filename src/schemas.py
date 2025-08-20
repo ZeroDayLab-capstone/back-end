@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from typing import Literal
 
 # 사용자
 class UserCreate(BaseModel):
@@ -73,3 +74,10 @@ class LoginRequest(BaseModel):
 
 class TokenResponse(BaseModel):
     token: str
+
+class ProfilePhotoUpdate(BaseModel):
+    photo: Literal["A", "B"]
+
+class ProfilePhotoResponse(BaseModel):
+    photo: Literal["A", "B"]
+    url: str

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel, EmailStr
-from typing import List, Dict
+from typing import List, Dict, Literal
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import User, UserLabProgress
@@ -137,3 +137,48 @@ def get_profile(email: str, db: Session = Depends(get_db)):  # email로 수정
         nationality=user.nationality,
         job=user.job
     )
+# === 프로필 사진 전용 모델 ===
+class ProfilePhotoUpdate(BaseModel):
+    photo: Literal["A", "B"]
+
+class ProfilePhotoResponse(BaseModel):
+    photo: Literal["A", "B"]
+    url: str
+
+# === 프로필 사진 조회 ===
+@router.get(
+    "/profile/photo/{email}",
+    response_model=ProfilePhotoResponse,
+    summary="사용자 프로필 사진 조회",
+    description="사용자의 현재 프로필 사진 선택과 URL을 반환합니다."
+)
+def get_profile_photo(email: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    url = f"/static/avatars/{user.profile_photo.lower()}.png"
+    return {"photo": user.profile_photo, "url": url}
+
+# === 프로필 사진 변경 ===
+@router.patch(
+    "/profile/photo/{email}",
+    response_model=ProfilePhotoResponse,
+    summary="사용자 프로필 사진 변경",
+    description="'A' 또는 'B' 중 하나를 선택하여 프로필 사진을 변경합니다."
+)
+def update_profile_photo(
+    email: str,
+    data: ProfilePhotoUpdate,
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.profile_photo = data.photo
+    db.commit()
+    db.refresh(user)
+
+    url = f"/static/avatars/{user.profile_photo.lower()}.png"
+    return {"photo": user.profile_photo, "url": url}

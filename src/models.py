@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, Text, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, Text, ForeignKey, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from database import Base
+from datetime import datetime
 
 # 사용자 테이블
 class User(Base):
@@ -13,6 +14,7 @@ class User(Base):
     gender = Column(Text, nullable=True)
     nationality = Column(Text, nullable=True)
     job = Column(Text, nullable=True)
+    profile_photo = Column(Text, nullable=False, default="A")  # "A" or "B"
 
     progress = relationship("UserLabProgress", back_populates="user")
 
@@ -67,3 +69,28 @@ class Log(Base):
     timestamp = Column(Text, nullable=False)
     action = Column(Text, nullable=False)
     user = Column(Text, nullable=False)
+
+# Q&A 게시판 테이블
+class QnAPost(Base):
+    __tablename__ = "qna_posts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(Text, nullable=False)
+    content = Column(Text, nullable=False)
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    author = relationship("User")
+    comments = relationship("QnAComment", back_populates="post")
+
+class QnAComment(Base):
+    __tablename__ = "qna_comments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    content = Column(Text, nullable=False)
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    post_id = Column(Integer, ForeignKey("qna_posts.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    author = relationship("User")
+    post = relationship("QnAPost", back_populates="comments")
