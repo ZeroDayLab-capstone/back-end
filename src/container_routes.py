@@ -108,7 +108,13 @@ PROBLEM_CONFIG: Dict[int, Dict[str, object]] = {
         "frontend_image": "zeroday01478/command_3:web",
         "backend_image":  "zeroday01478/command_3:web", 
         "host_range":     (2000, 6000),
-        "flag":           "<여기에 command_3 플래그>",
+        "flag":           "FLAG{f2d9b1e67c804b92a3d7e6c4f9b18d25}",
+    },
+    17:{
+        "frontend_image": "zeroday01478/reflected_xss_2:frontend",
+        "backend_image":  "zeroday01478/reflected_xss_2:backend", 
+        "host_range":     (2000, 6000),
+        "flag":           "<여기에 reflected_xss_2 플래그>",
     },
 }
 
