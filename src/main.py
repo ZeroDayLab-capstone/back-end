@@ -24,10 +24,10 @@ app.include_router(flag_routes.router, prefix="/flag")         # 플래그 제�
 app.include_router(container_router, prefix="/containers")     
 app.include_router(password_reset_routes.router, prefix="/auth")
 app.include_router(id_find_routes.router)
-app.include_router(qna_router, prefix="/qna")                  # ✅ QnA 라우터
+app.include_router(qna_router, prefix="/qna")                  # QnA 라우터
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# 🔥 CORS 설정 추가
+# CORS 설정 추가
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # 개발 시 전체 허용, 배포 시 도메인 지정 권장
