@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from database import SessionLocal
 from models import User
-from database import get_db
 
 router = APIRouter(tags=["id-find"])
 
