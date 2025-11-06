@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from database import SessionLocal
 from models import User
+from database import get_db
 
 router = APIRouter(tags=["id-find"])
 
@@ -17,9 +18,9 @@ def get_db():
 
 # 요청 스키마
 class IDFindRequest(BaseModel):
-    username: str
-    nationality: str
-    job: str
+    name: str = Field(description="가입 시 이름(=username)")
+    birthdate: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")  # YYYY-MM-DD
+    gender: str
 
 # 응답 스키마
 class IDFindResponse(BaseModel):
@@ -46,13 +47,12 @@ def mask_email(email: str) -> str:
     return f"{masked}@{domain}"
 
 # 아이디(이메일) 찾기 API
-@router.post("/auth/find-id", response_model=IDFindResponse, 
-            summary="아이디 찾기", description="사용자의 이름, 국적, 직업을 기반으로 아이디(이메일)를 찾습니다.")
+@router.post("/auth/find-id")
 def find_id(data: IDFindRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(
-        User.username == data.username,
-        User.nationality == data.nationality,
-        User.job == data.job
+        User.username == data.name,
+        User.gender == data.gender,
+        User.birthdate == data.birthdate,
     ).first()
 
     if not user:

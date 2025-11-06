@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import User
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
@@ -33,6 +33,7 @@ class RegisterRequest(BaseModel):
     password: str
     username: str
     gender: str | None = None
+    birthdate: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
     nationality: str | None = None
     job: str | None = None
 
@@ -86,7 +87,7 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
 
     hashed_pw = hash_password(data.password)
     new_user = User(email=data.email, password=hashed_pw, username=data.username,
-    gender=data.gender, nationality=data.nationality, job=data.job)
+    gender=data.gender, nationality=data.nationality, job=data.job, birthdate=data.birthdate)
     db.add(new_user)
     db.commit()
     return {"message": "User registered successfully"}
