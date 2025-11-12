@@ -1,1 +1,1 @@
-<여기에 stored_xss_3 플래그>
+<여기에 stored_xss_2 플래그>

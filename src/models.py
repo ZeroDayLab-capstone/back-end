@@ -15,6 +15,7 @@ class User(Base):
     birthdate = Column(Text, nullable=True)
     nationality = Column(Text, nullable=True)
     job = Column(Text, nullable=True)
+    birthdate = Column(Text, nullable=True)
     profile_photo = Column(Text, nullable=False, default="A")  # "A" or "B"
 
     progress = relationship("UserLabProgress", back_populates="user")

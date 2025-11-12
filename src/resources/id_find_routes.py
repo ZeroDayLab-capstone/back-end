@@ -46,7 +46,7 @@ def mask_email(email: str) -> str:
     return f"{masked}@{domain}"
 
 # 아이디(이메일) 찾기 API
-@router.post("/auth/find-id")
+@router.post("/auth/find-id", response_model=IDFindResponse)
 def find_id(data: IDFindRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(
         User.username == data.name,
@@ -55,10 +55,9 @@ def find_id(data: IDFindRequest, db: Session = Depends(get_db)):
     ).first()
 
     if not user:
-        return {"message": "일치하는 계정을 찾을 수 없습니다."}
+        return IDFindResponse(message="일치하는 계정을 찾을 수 없습니다.", email_hint=None)
 
-    email_hint = mask_email(user.email)
-    return {
-        "message": "일치하는 계정을 찾았습니다.",
-        "email_hint": email_hint
-    }
+    return IDFindResponse(
+        message="일치하는 계정을 찾았습니다.",
+        email_hint=mask_email(user.email)
+    )
