@@ -1,1 +1,1 @@
-<여기에 stored_xss_2 플래그>
+FLAG{9c926de27b8995b218c8b1f51806ce21}
